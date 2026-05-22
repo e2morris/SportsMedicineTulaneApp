@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Tulane University Athletic Training Appointment Scheduling"
+    />
+    <title>Tulane Sports Medicine - Appointment Scheduling</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Trainer Dashboard (Hidden by default, accessible via direct link) -->
+    <section
+      id="dashboard"
+      class="section dashboard-section"
+      style="display: none"
+    >
+      <div class="container">
+        <div class="dashboard-header">
+          <h1>Trainer Dashboard</h1>
+          <div class="dashboard-actions">
+            <button id="export-btn" class="action-button">Export to CSV</button>
+            <button id="refresh-btn" class="action-button">Refresh</button>
+            <button id="back-to-booking" class="action-button secondary">
+              Back to Booking
+            </button>
+          </div>
+        </div>
+
+        <div class="dashboard-stats">
+          <div class="stat-card">
+            <div class="stat-number" id="total-appointments">0</div>
+            <div class="stat-label">Total Appointments</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="upcoming-appointments">0</div>
+            <div class="stat-label">Upcoming</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="today-appointments">0</div>
+            <div class="stat-label">Today</div>
+          </div>
+        </div>
+
+        <div class="dashboard-filters">
+          <input
+            type="text"
+            id="search-input"
+            placeholder="Search by name, email, or phone..."
+            class="search-input"
+          />
+          <select id="filter-date" class="filter-select">
+            <option value="all">All Dates</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+            <option value="upcoming">Upcoming</option>
+            <option value="past">Past</option>
+          </select>
+          <select id="filter-reason" class="filter-select">
+            <option value="all">All Services</option>
+            <option value="new-injury">New Injury</option>
+            <option value="follow-up">Follow Up Injury</option>
+            <option value="treatment">Treatment</option>
+            <option value="rehab">Rehab</option>
+            <option value="cupping">Cupping</option>
+            <option value="taping">Taping</option>
+            <option value="concussion">Concussion Evaluation</option>
+            <option value="rowing-screen">Rowing Screen</option>
+            <option value="physical-vitals">Physical Vitals</option>
+            <option value="illness">Illness</option>
+            <option value="meeting">Meeting</option>
+          </select>
+        </div>
+
+        <div class="appointments-list" id="appointments-list">
+          <div class="empty-state">
+            <p>No appointments scheduled yet.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Booking Flow -->
+    <main id="booking-flow">
+      <!-- Logo and Title integrated in main content (shared across all steps) -->
+      <div class="header-section-integrated">
+        <div class="logo-container-centered">
+          <img
+            src="logo.png"
+            alt="Tulane University"
+            class="tulane-logo-centered"
+          />
+          <h1 class="page-title-centered">SPORTS MEDICINE</h1>
+        </div>
+        <div class="header-links-top">
+          <a href="#dashboard" id="dashboard-link" class="header-link"
+            >Dashboard</a
+          >
+        </div>
+      </div>
+
+      <!-- Step 1: Service Selection -->
+      <section id="step-service" class="booking-step active-step">
+        <div class="container">
+          <div class="service-selection">
+            <!-- Service List (shown initially) -->
+            <div id="service-list-container">
+              <h2 class="section-title-with-icon">
+                <span class="checkbox-icon">☑</span>
+                Select Appointment
+              </h2>
+              <div class="services-list" id="services-list">
+                <!-- Services will be populated by JavaScript -->
+              </div>
+            </div>
+
+            <!-- Date & Time Selection Box (replaces service list when BOOK is clicked) -->
+            <div
+              id="date-time-selection"
+              class="date-time-selection-box"
+              style="display: none"
+            >
+              <div class="framed-box">
+                <div class="two-column-layout-inline">
+                  <div class="left-column-inline">
+                    <button
+                      class="back-to-services"
+                      onclick="backToServiceSelection()"
+                    >
+                      ← SELECT APPOINTMENT
+                    </button>
+                    <div class="appointment-box">
+                      <div class="appointment-label">APPOINTMENT</div>
+                      <div
+                        class="appointment-selected"
+                        id="selected-service-inline"
+                      >
+                        <span id="selected-service-text-inline"></span>
+                        <button
+                          class="remove-appointment"
+                          onclick="backToServiceSelection()"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="right-column-inline">
+                    <div class="step-indicator active">
+                      <span class="step-label">Date & Time</span>
+                    </div>
+                    <div class="date-time-container-inline">
+                      <div class="calendar-container">
+                        <div class="calendar-header">
+                          <button class="calendar-nav" id="prev-month-inline">
+                            ←
+                          </button>
+                          <h3 id="calendar-month-year-inline"></h3>
+                          <button class="calendar-nav" id="next-month-inline">
+                            →
+                          </button>
+                        </div>
+                        <div
+                          class="calendar-grid"
+                          id="calendar-grid-inline"
+                        ></div>
+                      </div>
+                      <div
+                        class="selected-date-header-inline"
+                        id="selected-date-header-inline"
+                        style="display: none"
+                      >
+                        <div
+                          class="selected-date-text"
+                          id="selected-date-text-inline"
+                        ></div>
+                        <div class="timezone-info">
+                          <span>TIME ZONE: </span>
+                          <a href="#" class="timezone-link"
+                            >CENTRAL TIME (GMT-06:00)</a
+                          >
+                        </div>
+                      </div>
+                      <div
+                        class="time-slots-container"
+                        id="time-slots-container"
+                        style="display: none"
+                      >
+                        <div
+                          class="time-slots-grid"
+                          id="time-slots-grid-inline"
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 2: Date Selection -->
+      <section id="step-date" class="booking-step">
+        <div class="container compact-container">
+          <div class="two-column-layout">
+            <div class="left-column">
+              <button
+                class="back-to-services"
+                onclick="goBackToServiceSelection();"
+                style="margin-bottom: 1rem"
+              >
+                ← SELECT APPOINTMENT
+              </button>
+              <div class="appointment-box">
+                <div class="appointment-label">APPOINTMENT</div>
+                <div
+                  class="appointment-selected"
+                  id="selected-service-display-compact"
+                >
+                  <span id="selected-service-text"></span>
+                  <button
+                    class="remove-appointment"
+                    onclick="goBackToServiceSelection();"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="right-column">
+              <div class="step-indicator active">
+                <span class="step-label">Date & Time</span>
+              </div>
+              <div class="date-time-container">
+                <div class="calendar-container">
+                  <div class="calendar-header">
+                    <button class="calendar-nav" id="prev-month">←</button>
+                    <h3 id="calendar-month-year"></h3>
+                    <button class="calendar-nav" id="next-month">→</button>
+                  </div>
+                  <div class="calendar-grid" id="calendar-grid"></div>
+                </div>
+                <div
+                  class="selected-date-header"
+                  id="selected-date-header"
+                  style="display: none"
+                >
+                  <div class="selected-date-text" id="selected-date-text"></div>
+                  <div class="timezone-info">
+                    <span>TIME ZONE: </span>
+                    <a href="#" class="timezone-link"
+                      >CENTRAL TIME (GMT-06:00)</a
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 3: Time Selection -->
+      <section id="step-time" class="booking-step">
+        <div class="container compact-container">
+          <div class="two-column-layout">
+            <div class="left-column">
+              <button
+                class="back-to-services"
+                onclick="goBackToServiceSelection();"
+                style="margin-bottom: 1rem"
+              >
+                ← SELECT APPOINTMENT
+              </button>
+              <div class="appointment-box">
+                <div class="appointment-label">APPOINTMENT</div>
+                <div
+                  class="appointment-selected"
+                  id="selected-service-display-time"
+                >
+                  <span id="selected-service-text-time"></span>
+                  <button
+                    class="remove-appointment"
+                    onclick="goBackToServiceSelection();"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="right-column">
+              <div class="step-indicator active">
+                <span class="step-label">Date & Time</span>
+              </div>
+              <div class="date-time-container">
+                <div class="selected-date-header">
+                  <div
+                    class="selected-date-text"
+                    id="selected-date-display"
+                  ></div>
+                  <div class="timezone-info">
+                    <span>TIME ZONE: </span>
+                    <a href="#" class="timezone-link"
+                      >CENTRAL TIME (GMT-06:00)</a
+                    >
+                  </div>
+                </div>
+                <div class="time-slots-grid" id="time-slots-grid"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 4: Contact Information -->
+      <section id="step-contact" class="booking-step">
+        <div class="container compact-container">
+          <div class="framed-box">
+            <div class="two-column-layout-inline">
+              <div class="left-column-inline">
+                <button class="back-to-services" onclick="goToStep('time')">
+                  ← DATE & TIME
+                </button>
+                <div class="appointment-box">
+                  <div class="appointment-label">APPOINTMENT</div>
+                  <div
+                    class="appointment-selected"
+                    id="selected-service-display-contact"
+                  >
+                    <div class="appointment-details-full">
+                      <div
+                        class="appointment-service-name"
+                        id="appointment-service-name-contact"
+                      ></div>
+                      <div
+                        class="appointment-datetime-full"
+                        id="appointment-datetime-contact"
+                      ></div>
+                    </div>
+                    <button
+                      class="remove-appointment"
+                      onclick="backToServiceSelection()"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="right-column-inline">
+                <div class="step-indicator active">
+                  <span class="step-label">Your Information</span>
+                </div>
+                <div class="contact-form-section">
+                  <h3 class="form-section-title">YOUR INFORMATION</h3>
+
+                  <form id="contact-form" class="contact-form">
+                    <div class="form-group">
+                      <label for="athlete-first-name">First name*</label>
+                      <input
+                        type="text"
+                        id="athlete-first-name"
+                        name="firstName"
+                        required
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label for="athlete-last-name">Last name*</label>
+                      <input
+                        type="text"
+                        id="athlete-last-name"
+                        name="lastName"
+                        required
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label for="athlete-phone">Phone</label>
+                      <div class="phone-instructions">
+                        Add your phone number to receive an appointment reminder
+                        via text message.
+                      </div>
+                      <input
+                        type="tel"
+                        id="athlete-phone"
+                        name="phone"
+                        placeholder="Add..."
+                      />
+                      <div class="phone-disclaimer">
+                        Message and data rates may apply. One message per
+                        appointment.
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label for="athlete-email">Email*</label>
+                      <div class="email-instructions">
+                        Use a comma or press enter/return to add additional
+                        email addresses.
+                      </div>
+                      <input
+                        type="email"
+                        id="athlete-email"
+                        name="email"
+                        required
+                        placeholder="Add..."
+                      />
+                    </div>
+
+                    <button type="submit" class="submit-button-stanford">
+                      CONFIRM APPOINTMENT
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 5: Confirmation -->
+      <section id="step-confirmation" class="booking-step">
+        <div class="container">
+          <div class="confirmation-section">
+            <div class="success-icon">✓</div>
+            <h2>Appointment Confirmed!</h2>
+            <div class="confirmation-details" id="confirmation-details"></div>
+            <p class="confirmation-message">
+              You will receive a confirmation email shortly.
+            </p>
+            <div class="confirmation-actions">
+              <button class="action-button" onclick="resetBooking()">
+                Book Another Appointment
+              </button>
+              <a href="#dashboard" class="action-button secondary"
+                >View Dashboard</a
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="container">
+        <p>Powered by Tulane Sports Medicine</p>
+      </div>
+    </footer>
+
+    <!-- EmailJS SDK -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"
+    ></script>
+    <script src="script.js"></script>
+  </body>
+</html>
